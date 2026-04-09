@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TECPATH | Sistema de Gestión de Transporte</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 flex flex-col h-screen overflow-hidden">
+
+    <div id="modal-registro" class="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/95 backdrop-blur-md">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200 mx-4">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">I</div>
+                <h2 class="text-2xl font-bold text-slate-800 tracking-tight">TECPATH Login</h2>
+                <p class="text-slate-500 text-sm mt-2">Ingresa número de control y contraseña</p>
+            </div>
+            <form id="form-login" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Número de Control</label>
+                    <input type="text" id="num-control" required placeholder="Ej. 201050170" 
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Contraseña (4 dígitos)</label>
+                    <input type="password" id="password" required placeholder="••••" maxlength="4"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <nav class="h-16 bg-slate-900 text-white flex items-center justify-between px-4 md:px-8 shadow-lg z-[1001] shrink-0">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-slate-800 rounded-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-indigo-500 rounded flex items-center justify-center font-bold shadow-sm">I</div>
+                <span class="text-xl font-bold tracking-tight">TEC<span class="text-indigo-400">PATH</span></span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-6">
+            <button onclick="miUbicacion()" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded-lg transition text-sm font-medium">
+                <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"></path></svg>
+                <span class="hidden md:inline">Mi Ubicación</span>
+            </button>
+            <button onclick="reportarIncidente()" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded-lg transition text-sm font-medium border border-slate-700">
+                <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"></path></svg>
+                <span class="hidden md:inline">Reportar</span>
+            </button>
+            <div class="h-8 w-[1px] bg-slate-700 hidden sm:block"></div>
+            <div class="flex items-center gap-3 pl-2">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-bold" id="user-display">Usuario</p>
+                    <p class="text-[10px] text-indigo-400 uppercase">Alumno</p>
+                </div>
+                <div class="w-10 h-10 bg-indigo-600 rounded-full border-2 border-slate-700 flex items-center justify-center font-bold shadow-md">U</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1 relative overflow-hidden">
+        <aside id="sidebar" class="sidebar w-80 bg-white border-r border-slate-200 flex flex-col shadow-xl z-[999]">
+            <div class="p-4 bg-slate-50 border-b border-slate-200">
+                <div class="relative">
+                    <input type="text" id="busqueda" placeholder="Buscar rutas..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition shadow-sm">
+                    <svg class="w-4 h-4 absolute left-3 top-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+
+            <div id="lista-rutas" class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
+                <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-4">Servicios Disponibles</h2>
+
+                <div onclick="cambiarRuta('ruta1', this)" class="ruta-card p-4 bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 transition cursor-pointer active shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <span class="text-sm font-bold text-slate-800">Ruta 01 - Cosmos</span>
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">Parada actual: Tecnológico</p>
+                </div>
+
+                <div onclick="cambiarRuta('ruta2', this)" class="ruta-card p-4 bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 transition cursor-pointer shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <span class="text-sm font-bold text-slate-800">Ruta 02 - Plutarco</span>
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">Parada actual: Centro</p>
+                </div>
+
+                <div onclick="cambiarRuta('ruta3', this)" class="ruta-card p-4 bg-white border border-slate-200 rounded-2xl hover:border-indigo-400 transition cursor-pointer shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <span class="text-sm font-bold text-slate-800">Ruta 03 - Verguel</span>
+                        <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">Parada actual: Alameda</p>
+                </div>
+            </div>
+
+            <div class="p-4 bg-white border-t border-slate-100">
+                <button onclick="activarPanico()" class="panic-active w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg flex items-center justify-center gap-2 transition-all">
+                    🚨 Botón de Pánico
+                </button>
+            </div>
+        </aside>
+
+        <div id="map" class="flex-1 h-full w-full"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        const latPabellon = 22.1448;
+        const lngPabellon = -102.2767;
+
+        // MAPA
+        const map = L.map('map', { zoomControl: false }).setView([latPabellon, lngPabellon], 16);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        // Icono de Usuario (Mi Ubicación)
+        const userIcon = L.divIcon({
+            className: 'user-marker',
+            html: `<div class="bg-blue-600 w-5 h-5 rounded-full border-2 border-white shadow-lg animate-pulse"></div>`,
+            iconSize: [20, 20]
+        });
+        L.marker([latPabellon, lngPabellon], {icon: userIcon}).addTo(map);
+
+        // Icono de Bus
+        const busIcon = L.divIcon({
+            className: 'bus-marker',
+            html: `<div class="text-4xl">🚌</div>`,
+            iconSize: [40, 40]
+        });
+        const busMarker = L.marker([22.1460, -102.2750], {icon: busIcon}).addTo(map);
+
+        // LÓGICA DE LOGIN MEJORADA
+        document.getElementById('form-login').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const num = document.getElementById('num-control').value;
+            const pass = document.getElementById('password').value;
+
+            // Validación: 9 dígitos, termina entre 100-400. Contraseña de 4.
+            const ultimosTres = parseInt(num.substring(num.length - 3));
+            const esValido = num.length === 9 && ultimosTres >= 100 && ultimosTres <= 400 && pass.length === 4;
+
+            if (esValido) {
+                Swal.fire({ title: 'Cargando...', timer: 800, showConfirmButton: false, didOpen: () => Swal.showLoading() })
+                .then(() => {
+                    document.getElementById('modal-registro').classList.add('hidden');
+                    document.getElementById('user-display').innerText = num;
+                    // FIX PARA EL MAPA:
+                    setTimeout(() => { map.invalidateSize(); }, 300);
+                });
+            } else {
+                // NOTIFICACIÓN DE ERROR Y REINICIO DE CAMPOS
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Datos Incorrectos',
+                    text: 'El número de control debe ser de 9 dígitos (100-400) y el PIN de 4 números.',
+                    confirmButtonColor: '#ef4444'
+                });
+                document.getElementById('form-login').reset(); // Reinicia los campos
+            }
+        });
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function miUbicacion() { map.flyTo([latPabellon, lngPabellon], 18); }
+        function activarPanico() { Swal.fire({ title: '¡PÁNICO!', text: 'Asistencia en camino.', icon: 'warning' }); }
+        function cambiarRuta(id, el) {
+            document.querySelectorAll('.ruta-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+        }
+    </script>
+</body>
+</html>
